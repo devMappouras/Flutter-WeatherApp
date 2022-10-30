@@ -1,4 +1,8 @@
+import 'package:cities/models/country.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import './models/http-response.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -8,119 +12,59 @@ class HomePage extends StatefulWidget {
 class HomePageState extends State<HomePage> {
   var _countries = <String>[];
   var _cities = Set<String>();
-  var selectedCountry = '';
+  String selectedCountry = 'Cyprus';
 
-  // Widget _buildList() {
-  //   return ListView.builder(
-  //     padding: const EdgeInsets.all(16.0),
-  //     itemBuilder: (context, item) {
-  //       if (item.isOdd) return Divider();
+  //GET Request
+  getCountries() async {
+    String url =
+        "https://api.airvisual.com/v2/countries?key=c852fd68-fa45-4067-a9ce-11b0cb080c78";
+    var response = await http.get(Uri.parse(url));
 
-  //       final index = item ~/ 2;
-  //       return _buildRow(_countries[index]);
-  //     },
-  //   );
-  // }
+    if (response.statusCode != 200) {
+      print('countries could not be retrieved');
+      return;
+    }
+    var responseData = json.decode(response.body);
+    var model = HttpResponse.fromJson(responseData);
+
+    _countries = [];
+
+    for (Map country in model.data) {
+      _countries.add(country.values.single);
+    }
+  }
 
   Widget _buildHomePage() {
+    getCountries();
+
     return Center(
-      child: Container(
-        alignment: const Alignment(0.0, -0.9),
-        child: DropdownButton<String>(
-          value: selectedCountry,
-          //elevation: 5,
-          style: TextStyle(color: Colors.black),
-          items: <String>[
-            'Android',
-            'IOS',
-            'Flutter',
-            'Node',
-            'Java',
-            'Python',
-            'PHP',
-          ].map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value),
-            );
-          }).toList(),
-          hint: const Text(
-            "Please choose a langauage",
-            style: TextStyle(
-                color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          DropdownButton(
+            value: selectedCountry,
+            icon: const Icon(Icons.keyboard_arrow_down),
+            items: _countries.map((String items) {
+              return DropdownMenuItem(
+                value: items,
+                child: Text(items),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                selectedCountry = newValue!;
+              });
+            },
           ),
-          onChanged: (String? value) {
-            setState(() {
-              selectedCountry = value ?? '';
-            });
-          },
-        ),
+        ],
       ),
     );
   }
 
-  // Widget _buildRow(WordPair pair) {
-  //   final alreadySaved = _savedWordPairs.contains(pair);
-
-  //   return ListTile(
-  //       title: Text(pair.asPascalCase, style: TextStyle(fontSize: 18.0)),
-  //       trailing: IconButton(
-  //         icon: Icon(alreadySaved ? Icons.favorite : Icons.favorite_border),
-  //         color: alreadySaved ? Colors.red : null,
-  //         onPressed: () => {
-  //           setState(() {
-  //             if (alreadySaved) {
-  //               _savedWordPairs.remove(pair);
-  //             } else {
-  //               _savedWordPairs.add(pair);
-  //             }
-  //           })
-  //         },
-  //       ),
-  //       onTap: () {
-  //         _viewDetailsScreen(pair.asPascalCase.toString());
-  //       });
-  // }
-
-  // void _viewFavouritesScreen() {
-  //   Navigator.of(context)
-  //       .push(MaterialPageRoute(builder: (BuildContext context) {
-  //     final Iterable<ListTile> tiles = _savedWordPairs.map((WordPair pair) {
-  //       return ListTile(
-  //           title: Text(pair.asPascalCase, style: TextStyle(fontSize: 16.0)));
-  //     });
-
-  //     final List<Widget> divided =
-  //         ListTile.divideTiles(context: context, tiles: tiles).toList();
-
-  //     return Scaffold(
-  //         appBar: AppBar(title: Text('Saved WordPairs')),
-  //         body: ListView(children: divided));
-  //   }));
-  // }
-
-  // void _viewDetailsScreen(String wordPair) {
-  //   Navigator.of(context)
-  //       .push(MaterialPageRoute(builder: (BuildContext context) {
-  //     return Scaffold(
-  //       appBar: AppBar(title: Text('$wordPair Details')),
-  //       body: Center(
-  //         child: Container(
-  //           alignment: const Alignment(0.0, -0.9),
-  //           child: Text(wordPair, style: TextStyle(fontSize: 35.0)),
-  //         ),
-  //       ),
-  //     );
-  //   }));
-  // }
-
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text('WordPair Generator'),
-          actions: <Widget>[
-            //IconButton(icon: Icon(Icons.list), onPressed: _viewFavouritesScreen)
-          ],
+          title: Text('Weather App'),
         ),
         body: _buildHomePage());
   }
